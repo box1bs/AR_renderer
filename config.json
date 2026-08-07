@@ -1,0 +1,5 @@
+{
+  "video_directory": "../testvids/",
+  "model_directory": "../models/",
+  "shader_directory": "../shaders/"
+}
