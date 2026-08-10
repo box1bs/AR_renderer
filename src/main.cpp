@@ -149,7 +149,6 @@ int main() {
 
         std::vector<std::vector<cv::Point>> contours;
         cv::findContours(dil, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-        if (contours.empty()) continue; // ?
 
         double bestv = 0;
         std::vector<cv::Point> besti;
