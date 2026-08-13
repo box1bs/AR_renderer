@@ -9,13 +9,16 @@ class Renderer {
     glm::vec3 bboxMin = {};
     glm::vec3 bboxMax = {};
     std::vector<int> faceIndex;
+    std::vector<int> normalIndex;
     std::vector<int> textureIndex;
     std::vector<glm::vec3> vertices;
+    std::vector<glm::vec3> normales;
     std::vector<glm::vec2> texture;
 
 public:
     struct Vertex {
         glm::vec3 position;
+        glm::vec3 normal;
         glm::vec2 tex;
     };
 

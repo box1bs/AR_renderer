@@ -17,7 +17,7 @@ int main() {
         return 1;
     }
 
-    cv::VideoCapture cap("../testvids/1.mp4");
+    cv::VideoCapture cap("../testvids/2.mp4");
     if (!cap.isOpened()) {
         std::cout << "frame isn't captured" << std::endl;
         return 1;
@@ -85,7 +85,7 @@ int main() {
         return 1;
     }
 
-    Renderer renderer("../models/labubu.obj");
+    Renderer renderer("../models/2.obj");
     auto mesh = renderer.GetMesh();
 
     std::vector<Renderer::Vertex> flatVerts;
@@ -111,8 +111,10 @@ int main() {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Renderer::Vertex), reinterpret_cast<void *>(offsetof(Renderer::Vertex, position)));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Renderer::Vertex), reinterpret_cast<void *>(offsetof(Renderer::Vertex, tex)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Renderer::Vertex), reinterpret_cast<void *>(offsetof(Renderer::Vertex, normal)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Renderer::Vertex), reinterpret_cast<void *>(offsetof(Renderer::Vertex, tex)));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 
@@ -240,7 +242,6 @@ int main() {
                 continue;
             }
             const glm::mat4 view = CvPoseToGlmView(rvec, tvec);
-            // const glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
 
             glUseProgram(modelProg);
             glUniformMatrix4fv(glGetUniformLocation(modelProg, "model"), 1, GL_FALSE, glm::value_ptr(model));
