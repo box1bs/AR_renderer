@@ -25,8 +25,8 @@ GLuint Renderer::mtlTex::loadMatTexture() const {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.cols, img.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, img.data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
-        // const glm::vec3 color = glm::clamp(Kd + Ka + Ks, 0.0f, 1.0f);
-        const glm::vec3 color = Kd;
+        const glm::vec3 color = glm::clamp(Kd + Ka + Ks, 0.0f, 1.0f);
+        // const glm::vec3 color = Kd;
         const unsigned char pixel[3] = {
             static_cast<unsigned char>(color.r * 255),
             static_cast<unsigned char>(color.g * 255),
@@ -61,10 +61,10 @@ std::vector<std::pair<std::vector<Renderer::Vertex>, Renderer::mtlTex>> Renderer
     return m;
 }
 
-[[nodiscard]] glm::mat4 Renderer::TransformMatrix(const float& hPercentage, const float& wPercentage) const {
+[[nodiscard]] glm::mat4 Renderer::TransformMatrix(const float& diagRelation) const {
     const glm::vec3 center = (bboxMax + bboxMin) * 0.5f;
     glm::mat4 transformMatrix(1.0f);
-    transformMatrix = glm::scale(transformMatrix, glm::vec3(getOptimalScale(hPercentage, wPercentage)));
+    transformMatrix = glm::scale(transformMatrix, glm::vec3(diagRelation));
     return glm::translate(transformMatrix, -center);
 }
 

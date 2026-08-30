@@ -17,7 +17,7 @@ int main() {
         return 1;
     }
 
-    cv::VideoCapture cap("../testvids/2.mp4");
+    cv::VideoCapture cap("../testvids/3.mp4");
     if (!cap.isOpened()) {
         std::cout << "frame isn't captured" << std::endl;
         return 1;
@@ -25,6 +25,7 @@ int main() {
 
     const int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
     const int height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+    double windowDiagProduct = cv::norm(cv::Point(0, 0) - cv::Point(width, height)) * cv::norm(cv::Point(0, height) - cv::Point(width, 0));
     GLFWwindow* window = InitWindow(width, height);
     glfwMakeContextCurrent(window);
     gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
@@ -126,7 +127,7 @@ int main() {
     };
 
     auto fwidth = static_cast<float>(width), fheight = static_cast<float>(height);
-    int frameWidth, frameHeight;
+    double frameDiagProduct;
     std::string prev = "def";
     GLuint texID;
     std::vector<cv::Point2f> prevPoints;
@@ -167,7 +168,7 @@ int main() {
             }
         }
 
-        std::vector<cv::Point2f> framePoints;
+        std::vector<cv::Point2f> figurePoints;
         if (!besti.empty()) {
             cv::drawContours(frame,
                 std::vector<std::vector<cv::Point>>{besti},
@@ -176,17 +177,11 @@ int main() {
                 2
             );
 
-            int maxx = std::numeric_limits<int>::lowest(), maxy = std::numeric_limits<int>::lowest();
-            int minx = std::numeric_limits<int>::max(), miny = std::numeric_limits<int>::max();
             for (const auto& point : besti) {
-                maxx = std::max(maxx, point.x); minx = std::min(minx, point.x);
-                maxy = std::max(maxy, point.y); miny = std::min(miny, point.y);
-
-                framePoints.emplace_back(point.x, point.y);
+                figurePoints.emplace_back(point.x, point.y);
             }
-            frameWidth = maxx - minx;
-            frameHeight = maxy - miny;
-            framePoints = MatchToPrevious(framePoints, prevPoints);
+            frameDiagProduct = cv::norm(besti[0] - besti[2]) * cv::norm(besti[1] - besti[3]);
+            figurePoints = MatchToPrevious(figurePoints, prevPoints);
         }
 
         cv::putText(frame,
@@ -215,7 +210,7 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         if (!besti.empty() || !prevPoints.empty()) {
-            if (besti.empty()) framePoints = prevPoints;
+            if (besti.empty()) figurePoints = prevPoints;
             cv::Mat cameraMatrix, distCoeffs;
             BuildCameraMatrix(fheight, fwidth, cameraMatrix, distCoeffs);
 
@@ -226,10 +221,7 @@ int main() {
                 [](const cv::Point2f& p){ return cv::Point3f(p.x, 0.0, -p.y); } // перпендикулярно относительно фрейма
             );
 
-            const glm::mat4 model = renderer.TransformMatrix(
-                static_cast<float>(frameHeight) / fheight,
-                static_cast<float>(frameWidth) / fwidth
-            );
+            const glm::mat4 model = renderer.TransformMatrix(cv::sqrt(frameDiagProduct / windowDiagProduct));
 
             const glm::mat4 projection = CvMatToGlmProjection(cameraMatrix, fwidth, fheight,
                 static_cast<float>(cv::getTrackbarPos("near", trackWindowName)) / 10.f,
@@ -237,7 +229,7 @@ int main() {
             );
 
             cv::Mat rvec, tvec;
-            if (!cv::solvePnP(objectPoints3D, framePoints, cameraMatrix, distCoeffs, rvec, tvec)) {
+            if (!cv::solvePnP(objectPoints3D, figurePoints, cameraMatrix, distCoeffs, rvec, tvec)) {
                 std::cout << "projection error" << std::endl;
                 continue;
             }

@@ -40,7 +40,7 @@ public:
 
     std::vector<std::pair<std::vector<Vertex>, mtlTex>> GetMesh();
 
-    [[nodiscard]] glm::mat4 TransformMatrix(const float& hPercentage, const float& wPercentage) const;
+    [[nodiscard]] glm::mat4 TransformMatrix(const float& diagRelation) const;
 
 private:
     std::vector<std::pair<std::string, int>> materialList;
