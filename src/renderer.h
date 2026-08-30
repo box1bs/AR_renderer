@@ -50,8 +50,6 @@ private:
 
     void loadMtl(const char* path);
 
-    [[nodiscard]] float getOptimalScale(const float& hPercentage, const float& wPercentage) const;
-
     void clear();
 };
 

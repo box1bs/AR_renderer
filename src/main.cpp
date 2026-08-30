@@ -86,6 +86,8 @@ int main() {
         return 1;
     }
 
+    auto fwidth = static_cast<float>(width), fheight = static_cast<float>(height);
+
     Renderer renderer("../models/2.obj");
     auto mesh = renderer.GetMesh();
 
@@ -125,9 +127,13 @@ int main() {
         {1.5, 1}, // RT
         {-1.5, 1}, // LT
     };
+    float avgSideSize = 0.f;
+    for (int i = 0; i < 4; ++i) {
+        avgSideSize += cv::norm(baseFig[i] - baseFig[(i + 1) % 4]);
+    }
+    avgSideSize /= 4.f;
+    // const float avgSideSize = 2.5f;
 
-    auto fwidth = static_cast<float>(width), fheight = static_cast<float>(height);
-    double frameDiagProduct;
     std::string prev = "def";
     GLuint texID;
     std::vector<cv::Point2f> prevPoints;
@@ -177,10 +183,7 @@ int main() {
                 2
             );
 
-            for (const auto& point : besti) {
-                figurePoints.emplace_back(point.x, point.y);
-            }
-            frameDiagProduct = cv::norm(besti[0] - besti[2]) * cv::norm(besti[1] - besti[3]);
+            std::ranges::transform(besti, std::back_inserter(figurePoints), [](const auto& point){ return cv::Point2f(point.x, point.y); });
             figurePoints = MatchToPrevious(figurePoints, prevPoints);
         }
 
@@ -221,7 +224,7 @@ int main() {
                 [](const cv::Point2f& p){ return cv::Point3f(p.x, 0.0, -p.y); } // перпендикулярно относительно фрейма
             );
 
-            const glm::mat4 model = renderer.TransformMatrix(cv::sqrt(frameDiagProduct / windowDiagProduct));
+            const glm::mat4 model = renderer.TransformMatrix(avgSideSize);
 
             const glm::mat4 projection = CvMatToGlmProjection(cameraMatrix, fwidth, fheight,
                 static_cast<float>(cv::getTrackbarPos("near", trackWindowName)) / 10.f,

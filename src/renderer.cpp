@@ -61,10 +61,11 @@ std::vector<std::pair<std::vector<Renderer::Vertex>, Renderer::mtlTex>> Renderer
     return m;
 }
 
-[[nodiscard]] glm::mat4 Renderer::TransformMatrix(const float& diagRelation) const {
+[[nodiscard]] glm::mat4 Renderer::TransformMatrix(const float& avgSideLen) const {
     const glm::vec3 center = (bboxMax + bboxMin) * 0.5f;
     glm::mat4 transformMatrix(1.0f);
-    transformMatrix = glm::scale(transformMatrix, glm::vec3(diagRelation));
+    // transformMatrix = glm::scale(transformMatrix, glm::vec3(diagRelation));
+    transformMatrix = glm::scale(transformMatrix, glm::vec3(avgSideLen / glm::length(bboxMax - bboxMin)));
     return glm::translate(transformMatrix, -center);
 }
 
@@ -202,10 +203,6 @@ void Renderer::loadMtl(const char *path) {
             ss >> tex->illum;
         }
     }
-}
-
-[[nodiscard]] float Renderer::getOptimalScale(const float& hPercentage, const float& wPercentage) const {
-    return std::min(hPercentage / (bboxMax.y - bboxMin.y), wPercentage / (bboxMax.x - bboxMin.x));
 }
 
 void Renderer::clear() {
