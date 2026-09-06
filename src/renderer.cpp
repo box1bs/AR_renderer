@@ -25,8 +25,8 @@ GLuint Renderer::mtlTex::loadMatTexture() const {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.cols, img.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, img.data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
-        const glm::vec3 color = glm::clamp(Kd + Ka + Ks, 0.0f, 1.0f);
-        // const glm::vec3 color = Kd;
+        // const glm::vec3 color = glm::clamp(Kd + Ka + Ks, 0.0f, 1.0f);
+        const glm::vec3 color = Kd;
         const unsigned char pixel[3] = {
             static_cast<unsigned char>(color.r * 255),
             static_cast<unsigned char>(color.g * 255),
@@ -47,7 +47,7 @@ std::vector<std::pair<std::vector<Renderer::Vertex>, Renderer::mtlTex>> Renderer
         std::vector<Vertex> verts;
         verts.reserve(end - start);
         for (size_t j = start; j < end; ++j) {
-            verts.emplace_back(vertices[faceIndex[j]], normales[normalIndex[i]], texture[textureIndex[j]]);
+            verts.emplace_back(vertices[faceIndex[j]], normales[normalIndex[j]], texture[textureIndex[j]]);
         }
         m.emplace_back(std::move(verts), materialBatch[materialList[i].first]);
     }
@@ -114,16 +114,19 @@ void Renderer::loadObjModel(const char* path) {
             ymin = std::min(ymin, y); ymax = std::max(ymax, y);
             zmin = std::min(zmin, z); zmax = std::max(zmax, z);
             vertices.emplace_back(x, y, z);
+
         } else if (subs == "vt") {
             std::istringstream v(line.substr(3));
             double U, V;
             v>>U>>V;
             texture.emplace_back(U, V);
+
         } else if (subs == "vn") {
             std::istringstream v(line.substr(3));
             double x, y, z;
             v>>x>>y>>z;
             normales.emplace_back(x, y, z);
+
         } else if (subs == "f ") {
             int a, b, c, A, B, C, xn, yn, zn;
             const char* ch = line.c_str();

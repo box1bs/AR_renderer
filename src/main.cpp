@@ -127,14 +127,31 @@ int main() {
         {1.5, 1}, // RT
         {-1.5, 1}, // LT
     };
-    float avgSideSize = 0.f;
+    double avgSideSize = 0.0;
     for (int i = 0; i < 4; ++i) {
         avgSideSize += cv::norm(baseFig[i] - baseFig[(i + 1) % 4]);
     }
-    avgSideSize /= 4.f;
+    avgSideSize /= 4.0;
     // const float avgSideSize = 2.5f;
 
-    std::string prev = "def";
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    const glm::mat4 model = renderer.TransformMatrix(avgSideSize);
+
+    const GLint modelLoc = glGetUniformLocation(modelProg, "model");
+    const GLint viewLoc = glGetUniformLocation(modelProg, "view");
+    const GLint projectionLoc = glGetUniformLocation(modelProg, "projection");
+    const GLint lightPosLoc = glGetUniformLocation(modelProg, "lightWorldPos");
+
+    const GLint texLoc = glGetUniformLocation(modelProg, "tex");
+    const GLint KaLoc = glGetUniformLocation(modelProg, "Ka");
+    const GLint KsLoc = glGetUniformLocation(modelProg, "Ks");
+    const GLint lightColorLoc = glGetUniformLocation(modelProg, "lightColor");
+    const GLint NsLoc = glGetUniformLocation(modelProg, "Ns");
+
+    const Renderer::mtlTex* prev = nullptr;
     GLuint texID;
     std::vector<cv::Point2f> prevPoints;
     while (!glfwWindowShouldClose(window)) {
@@ -224,8 +241,6 @@ int main() {
                 [](const cv::Point2f& p){ return cv::Point3f(p.x, 0.0, -p.y); } // перпендикулярно относительно фрейма
             );
 
-            const glm::mat4 model = renderer.TransformMatrix(avgSideSize);
-
             const glm::mat4 projection = CvMatToGlmProjection(cameraMatrix, fwidth, fheight,
                 static_cast<float>(cv::getTrackbarPos("near", trackWindowName)) / 10.f,
                 static_cast<float>(cv::getTrackbarPos("far", trackWindowName)) / 10.f
@@ -239,20 +254,25 @@ int main() {
             const glm::mat4 view = CvPoseToGlmView(rvec, tvec);
 
             glUseProgram(modelProg);
-            glUniformMatrix4fv(glGetUniformLocation(modelProg, "model"), 1, GL_FALSE, glm::value_ptr(model));
-            glUniformMatrix4fv(glGetUniformLocation(modelProg, "view"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniformMatrix4fv(glGetUniformLocation(modelProg, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+            glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+            glUniform3f(lightPosLoc, tvec.at<double>(0, 0), tvec.at<double>(1, 0), tvec.at<double>(2, 0));
             glBindVertexArray(modelVAO);
 
             GLsizei c = 0;
             for (const auto&[verts, mtl] : mesh) {
-                if (prev == "def" || prev != mtl.map_Kd) {
-                    prev = mtl.map_Kd;
+                if (prev == nullptr || prev != &mtl) {
+                    prev = &mtl;
                     texID = mtl.loadMatTexture();
                 }
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, texID);
-                glUniform1i(glGetUniformLocation(modelProg, "tex"), 1);
+                glUniform1i(texLoc, 1);
+                glUniform3fv(KaLoc, 1, glm::value_ptr(mtl.Ka));
+                glUniform3fv(KsLoc, 1, glm::value_ptr(mtl.Ks));
+                glUniform3f(lightColorLoc, 1.f, 1.f, 1.f);
+                glUniform1f(NsLoc, mtl.Ns);
 
                 glDrawArrays(GL_TRIANGLES, c, static_cast<GLsizei>(verts.size()));
                 c += static_cast<GLsizei>(verts.size());
